@@ -1,4 +1,3 @@
-from django.shortcuts import render, redirect
 from employee.models import Employee
 from employee.serializers import EmployeeSerializer
 from rest_framework import viewsets
