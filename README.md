@@ -7,3 +7,5 @@
 * [Firebase Phone Number](https://www.youtube.com/watch?si=eqOybQmc0-JuM9Tm&v=dGwr66EkJKk&feature=youtu.be)
 
 * [Firebase Sign In and Google Sign In](https://blog.codemagic.io/firebase-authentication-google-sign-in-using-flutter/)
+
+* [Cookies](https://stackoverflow.com/questions/73154687/dio-dart-flutter-get-and-set-cookie)
