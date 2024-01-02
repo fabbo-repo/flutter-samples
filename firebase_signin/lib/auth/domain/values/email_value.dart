@@ -1,5 +1,5 @@
 import 'package:firebase_signin/auth/domain/failures/failure.dart';
-import 'package:firebase_signin/auth/domain/failures/unprocessable_value_failure.dart';
+import 'package:firebase_signin/auth/domain/failures/invalid_value_failure.dart';
 import 'package:firebase_signin/auth/domain/values/abstract_value.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -28,7 +28,7 @@ Either<Failure, String> _validate(String input) {
   }
   String message = input.isEmpty ? "Email needed" : "Email not valid";
   return left(
-    UnprocessableValueFailure(
+    InvalidValueFailure(
       detail: message,
     ),
   );
