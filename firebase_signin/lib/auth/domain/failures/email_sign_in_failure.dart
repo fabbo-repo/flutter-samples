@@ -16,6 +16,6 @@ class EmailSignInFailure extends Failure {
       return const EmailSignInFailure(detail: "User disabled.");
     }
     return const EmailSignInFailure(
-        detail: "Error occurred using Google Sign-In. Try again.");
+        detail: "Error occurred using Email Sign-In. Try again.");
   }
 }

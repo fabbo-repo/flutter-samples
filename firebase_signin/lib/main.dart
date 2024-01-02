@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_signin/auth/application/controllers/auth_controller.dart';
 import 'package:firebase_signin/auth/application/widgets/google_sign_in_button.dart';
@@ -41,15 +42,36 @@ class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 
-  static SnackBar customSnackBar(
-      {required String content, Color color = Colors.redAccent}) {
-    return SnackBar(
+  static void customSnackBar(
+      {required BuildContext context,
+      required String content,
+      Color color = Colors.redAccent}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       backgroundColor: Colors.black,
       content: Text(
         content,
         style: TextStyle(color: color, letterSpacing: 0.5),
       ),
-    );
+    ));
+  }
+
+  static void printUserData(BuildContext context, User user) async {
+    debugPrint("Display Name: ${user.displayName}");
+    debugPrint("UUID: ${user.uid}");
+
+    debugPrint("Email: ${user.email}");
+    debugPrint(
+        "Email Verified: ${user.emailVerified}\nTenantd Id: ${user.tenantId}");
+
+    debugPrint("Phone Number: ${user.phoneNumber}");
+    debugPrint("Tenantd Id: ${user.tenantId}");
+    debugPrint("Id token: ${await user.getIdToken()}");
+
+    // ignore: use_build_context_synchronously
+    MyHomePage.customSnackBar(
+        context: context,
+        content: "Welcome ${user.displayName}",
+        color: Colors.white);
   }
 }
 
@@ -75,34 +97,39 @@ class _MyHomePageState extends State<MyHomePage> {
                   controller: widget.passwordTextController,
                 ),
                 ElevatedButton(
-                    onPressed: () {
-
-                    }, child: const Text("Email Register")),
+                    onPressed: () async {
+                      (await widget.authController.registerWithEmail(
+                              email: widget.emailTextController.text,
+                              password: widget.passwordTextController.text))
+                          .fold(
+                              (failure) => MyHomePage.customSnackBar(
+                                  context: context,
+                                  content: failure.detail), (user) {
+                        MyHomePage.printUserData(context, user);
+                      });
+                    },
+                    child: const Text("Email Register")),
                 ElevatedButton(
-                    onPressed: () {
-                      
-                    }, child: const Text("Email Sign In"))
+                    onPressed: () async {
+                      (await widget.authController.signInWithEmail(
+                              email: widget.emailTextController.text,
+                              password: widget.passwordTextController.text))
+                          .fold(
+                              (failure) => MyHomePage.customSnackBar(
+                                  context: context,
+                                  content: failure.detail), (user) {
+                        MyHomePage.printUserData(context, user);
+                      });
+                    },
+                    child: const Text("Email Sign In"))
               ],
             )),
             GoogleSignInButton(
               onPressed: () async {
                 (await widget.authController.signInWithGoogle()).fold(
-                    (failure) =>
-                        MyHomePage.customSnackBar(content: failure.detail),
-                    (user) {
-                  debugPrint("Display Name: ${user.displayName}");
-                  debugPrint("UUID: ${user.uid}");
-
-                  debugPrint("Email: ${user.email}");
-                  debugPrint(
-                      "Email Verified: ${user.emailVerified}\nTenantd Id: ${user.tenantId}");
-
-                  debugPrint("Phone Number: ${user.phoneNumber}");
-                  debugPrint("Tenantd Id: ${user.tenantId}");
-
-                  MyHomePage.customSnackBar(
-                      content: "Welcome ${user.displayName}",
-                      color: Colors.white);
+                    (failure) => MyHomePage.customSnackBar(
+                        context: context, content: failure.detail), (user) {
+                  MyHomePage.printUserData(context, user);
                 });
               },
             )

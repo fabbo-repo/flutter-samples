@@ -18,6 +18,6 @@ class EmailRegisterFailure extends Failure {
           detail: "Cannot create user with email and password.");
     }
     return const EmailRegisterFailure(
-        detail: "Error occurred using Google Sign-In. Try again.");
+        detail: "Error occurred using Email Register. Try again.");
   }
 }
