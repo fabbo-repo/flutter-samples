@@ -8,4 +8,4 @@
 
 * [Firebase Sign In and Google Sign In](https://blog.codemagic.io/firebase-authentication-google-sign-in-using-flutter/)
 
-* [Cookies](https://stackoverflow.com/questions/73154687/dio-dart-flutter-get-and-set-cookie)
+* [Firebase Sign In Automatic Login](https://mercyjemosop.medium.com/keep-user-logged-in-flutter-firebase-decec83cbd87)
