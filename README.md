@@ -9,3 +9,11 @@
 * [Firebase Sign In and Google Sign In](https://blog.codemagic.io/firebase-authentication-google-sign-in-using-flutter/)
 
 * [Firebase Sign In Automatic Login](https://mercyjemosop.medium.com/keep-user-logged-in-flutter-firebase-decec83cbd87)
+
+## Commands
+
+* Get SHA keys
+
+~~~
+keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+~~~

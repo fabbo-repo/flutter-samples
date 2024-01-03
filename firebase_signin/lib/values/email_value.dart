@@ -1,6 +1,6 @@
-import 'package:firebase_signin/auth/domain/failures/failure.dart';
-import 'package:firebase_signin/auth/domain/failures/invalid_value_failure.dart';
-import 'package:firebase_signin/auth/domain/values/abstract_value.dart';
+import 'package:firebase_signin/failures/failure.dart';
+import 'package:firebase_signin/failures/invalid_value_failure.dart';
+import 'package:firebase_signin/values/abstract_value.dart';
 import 'package:fpdart/fpdart.dart';
 
 /// User Email value

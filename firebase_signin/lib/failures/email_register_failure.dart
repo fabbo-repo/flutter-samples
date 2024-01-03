@@ -1,4 +1,4 @@
-import 'package:firebase_signin/auth/domain/failures/failure.dart';
+import 'package:firebase_signin/failures/failure.dart';
 
 class EmailRegisterFailure extends Failure {
   const EmailRegisterFailure({required super.detail});

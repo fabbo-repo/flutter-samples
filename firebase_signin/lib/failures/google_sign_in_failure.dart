@@ -1,4 +1,4 @@
-import 'package:firebase_signin/auth/domain/failures/failure.dart';
+import 'package:firebase_signin/failures/failure.dart';
 
 /// Represents a google sign in error
 class GoogleSignInFailure extends Failure {
