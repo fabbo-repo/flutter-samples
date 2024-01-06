@@ -10,6 +10,8 @@
 
 * [Firebase Sign In Automatic Login](https://mercyjemosop.medium.com/keep-user-logged-in-flutter-firebase-decec83cbd87)
 
+* [Widgets for Cupertino and Material](https://pub.dev/packages/flutter_platform_widgets)
+
 ## Commands
 
 * Get SHA keys
