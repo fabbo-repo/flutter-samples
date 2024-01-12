@@ -66,18 +66,13 @@ class AuthController {
     }
   }
 
-  Future<void> verifyPhoneNumber(
-      {required String phoneNumber, bool linkWithUser = false}) async {
+  Future<void> verifyPhoneNumber({required String phoneNumber}) async {
     final FirebaseAuth firbaseAuth = FirebaseAuth.instance;
     await firbaseAuth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (PhoneAuthCredential phoneAuthCredential) async {
           try {
-            if (linkWithUser) {
-              firbaseAuth.currentUser!.linkWithCredential(phoneAuthCredential);
-            } else {
-              await firbaseAuth.signInWithCredential(phoneAuthCredential);
-            }
+            debugPrint("Sign in after phone verification");
           } on FirebaseAuthException catch (e) {
             debugPrint(PhoneSignInFailure.fromFirebaseCode(e.code).detail);
           }
@@ -94,11 +89,17 @@ class AuthController {
   }
 
   Future<Either<Failure, void>> verifyPhoneCode(
-      {required String smsCode}) async {
+      {required String smsCode, bool linkWithUser = false}) async {
     final FirebaseAuth firbaseAuth = FirebaseAuth.instance;
     try {
-      await firbaseAuth.signInWithCredential(PhoneAuthProvider.credential(
-          verificationId: verificationId, smsCode: smsCode));
+      if (linkWithUser) {
+        firbaseAuth.currentUser!.linkWithCredential(
+            PhoneAuthProvider.credential(
+                verificationId: verificationId, smsCode: smsCode));
+      } else {
+        await firbaseAuth.signInWithCredential(PhoneAuthProvider.credential(
+            verificationId: verificationId, smsCode: smsCode));
+      }
 
       return right(null);
     } on FirebaseAuthException catch (e) {
