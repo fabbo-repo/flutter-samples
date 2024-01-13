@@ -60,8 +60,9 @@ class MyHomePage extends StatefulWidget {
     debugPrint("UUID: ${user.uid}");
 
     debugPrint("Email: ${user.email}");
-    debugPrint(
-        "Email Verified: ${user.emailVerified}\nTenantd Id: ${user.tenantId}");
+    debugPrint("Email Verified: ${user.emailVerified}");
+
+    debugPrint("Provider Data: ${user.providerData}");
 
     debugPrint("Phone Number: ${user.phoneNumber}");
     debugPrint("Tenantd Id: ${user.tenantId}");

@@ -33,7 +33,13 @@ class PhoneView extends StatelessWidget {
                 await authController.verifyPhoneCode(
                     smsCode: smsCodeTextController.text);
               },
-              child: const Text("Verify Code"))
+              child: const Text("Verify Code")),
+          ElevatedButton(
+              onPressed: () async {
+                await authController.verifyPhoneCode(
+                    smsCode: smsCodeTextController.text, linkWithUser: true);
+              },
+              child: const Text("Link with user"))
         ],
       )),
     );
