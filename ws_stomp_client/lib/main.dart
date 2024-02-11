@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
@@ -19,7 +17,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'WS Tester'),
     );
   }
 }
@@ -37,26 +35,42 @@ class _MyHomePageState extends State<MyHomePage> {
   String? token;
   StompClient? stompClient;
   List<String> messages = [];
+  bool isConnected = false;
 
   void _connect() {
     setState(() {
       stompClient = StompClient(
         config: StompConfig(
-            url: 'ws://localhost:61613/ws',
-            onConnect: (stompFrame) => debugPrint(
-                "Connected ${stompFrame.headers}\n${stompFrame.body}"),
-            //stompConnectHeaders: {'Authorization': 'Bearer $token'},
-            //webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
-            webSocketConnectHeaders: {"login": "user", "passcode": "password"},
-            stompConnectHeaders: {"login": "user", "passcode": "password"},
+            url: 'ws://localhost:15674/ws',
+            onConnect: (stompFrame) {
+              debugPrint("Connected ${stompFrame.headers}\n${stompFrame.body}");
+              setState(() {
+                isConnected = true;
+              });
+            },
+            webSocketConnectHeaders: {
+              "login": "client",
+              "passcode": "password"
+            },
+            stompConnectHeaders: {"login": "client", "passcode": "password"},
             onWebSocketError: (e) {
               debugPrint("[WS ERROR] $e");
               stompClient?.deactivate();
             },
-            onStompError: (d) => debugPrint("[STOMP ERROR] $d"),
+            onStompError: (e) {
+              debugPrint("[STOMP ERROR] $e");
+              stompClient?.deactivate();
+            },
             onDisconnect: (f) => debugPrint("Disconnected")),
       );
       stompClient!.activate();
+    });
+  }
+
+  void _disconnect() {
+    setState(() {
+      stompClient!.deactivate();
+      isConnected = false;
     });
   }
 
@@ -118,11 +132,17 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: token == null ? null : _connect,
-        tooltip: 'Connect',
-        child: const Icon(Icons.connect_without_contact),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: isConnected
+          ? FloatingActionButton(
+              onPressed: _disconnect,
+              tooltip: 'Disconnect',
+              child: const Icon(Icons.cancel_outlined),
+            )
+          : FloatingActionButton(
+              onPressed: _connect,
+              tooltip: 'Connect',
+              child: const Icon(Icons.connect_without_contact),
+            ),
     );
   }
 }
