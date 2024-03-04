@@ -37,34 +37,49 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String> messages = [];
   bool isConnected = false;
 
-  void _connect() {
-    setState(() {
-      stompClient = StompClient(
-        config: StompConfig(
-            url: 'ws://localhost:15674/ws',
-            onConnect: (stompFrame) {
-              debugPrint("Connected ${stompFrame.headers}\n${stompFrame.body}");
-              setState(() {
-                isConnected = true;
-              });
-            },
-            webSocketConnectHeaders: {
-              "login": "client",
-              "passcode": "password"
-            },
-            stompConnectHeaders: {"login": "client", "passcode": "password"},
-            onWebSocketError: (e) {
-              debugPrint("[WS ERROR] $e");
-              stompClient?.deactivate();
-            },
-            onStompError: (e) {
-              debugPrint("[STOMP ERROR] $e");
-              stompClient?.deactivate();
-            },
-            onDisconnect: (f) => debugPrint("Disconnected")),
-      );
-      stompClient!.activate();
-    });
+  Future<void> _connect() async {
+    stompClient = StompClient(
+      config: StompConfig(
+          url: 'ws://localhost:15674/ws',
+          onConnect: (stompFrame) {
+            debugPrint("Connected ${stompFrame.headers}");
+            if (stompFrame.binaryBody != null) {
+              debugPrint(String.fromCharCodes(stompFrame.binaryBody!));
+            }
+            stompClient!.subscribe(
+                destination: token!,
+                headers: {
+                  "auto_delete": "true",
+                  "durable": "false",
+                  "exclusive": "false"
+                },
+                callback: (stompFrame) {
+                  debugPrint("Sub response command: ${stompFrame.command}");
+                  debugPrint("Sub response headers: ${stompFrame.headers}");
+                  debugPrint("Sub response body: ${stompFrame.body}");
+                  debugPrint(
+                      "Sub response binary body: ${stompFrame.binaryBody}");
+                  if (stompFrame.binaryBody != null) {
+                    debugPrint(
+                        "Sub response body: ${String.fromCharCodes(stompFrame.binaryBody!)}");
+                  }
+                });
+            setState(() {
+              isConnected = true;
+            });
+          },
+          stompConnectHeaders: {"login": "client", "passcode": "password"},
+          onWebSocketError: (e) {
+            debugPrint("[WS ERROR] $e");
+            stompClient?.deactivate();
+          },
+          onStompError: (stompFrame) {
+            debugPrint("[STOMP ERROR] ${stompFrame.body}");
+            stompClient?.deactivate();
+          },
+          onDisconnect: (f) => debugPrint("Disconnected")),
+    );
+    stompClient!.activate();
   }
 
   void _disconnect() {
@@ -139,7 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Icon(Icons.cancel_outlined),
             )
           : FloatingActionButton(
-              onPressed: _connect,
+              onPressed: token != null && token!.isNotEmpty ? _connect : null,
               tooltip: 'Connect',
               child: const Icon(Icons.connect_without_contact),
             ),
