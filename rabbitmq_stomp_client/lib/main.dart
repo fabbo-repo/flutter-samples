@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
@@ -17,22 +22,33 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'WS Tester'),
+      home: MyHomePage(title: 'WS Tester'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  MyHomePage({super.key, required this.title});
 
   final String title;
+  final TextEditingController textController = TextEditingController();
+  final ScrollController scrollController = new ScrollController();
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String? token;
+  final dio = Dio(BaseOptions(
+    baseUrl: "http://localhost:8080",
+    validateStatus: (status) =>
+        status != HttpStatus.unauthorized &&
+        status != HttpStatus.internalServerError,
+  ));
+
+  String? userFrom = "2aeaabd9-d4fa-4507-b373-df73236c31d7";
+  String? userTo = "2aeaabd9-d4fa-4507-b373-df73236c31d7";
+  String? queue;
   StompClient? stompClient;
   List<String> messages = [];
   bool isConnected = false;
@@ -41,29 +57,12 @@ class _MyHomePageState extends State<MyHomePage> {
     stompClient = StompClient(
       config: StompConfig(
           url: 'ws://localhost:15674/ws',
-          onConnect: (stompFrame) {
+          onConnect: (stompFrame) async {
             debugPrint("Connected ${stompFrame.headers}");
             if (stompFrame.binaryBody != null) {
               debugPrint(String.fromCharCodes(stompFrame.binaryBody!));
             }
-            stompClient!.subscribe(
-                destination: token!,
-                headers: {
-                  "auto_delete": "true",
-                  "durable": "false",
-                  "exclusive": "false"
-                },
-                callback: (stompFrame) {
-                  debugPrint("Sub response command: ${stompFrame.command}");
-                  debugPrint("Sub response headers: ${stompFrame.headers}");
-                  debugPrint("Sub response body: ${stompFrame.body}");
-                  debugPrint(
-                      "Sub response binary body: ${stompFrame.binaryBody}");
-                  if (stompFrame.binaryBody != null) {
-                    debugPrint(
-                        "Sub response body: ${String.fromCharCodes(stompFrame.binaryBody!)}");
-                  }
-                });
+            subscribe();
             setState(() {
               isConnected = true;
             });
@@ -71,11 +70,15 @@ class _MyHomePageState extends State<MyHomePage> {
           stompConnectHeaders: {"login": "client", "passcode": "password"},
           onWebSocketError: (e) {
             debugPrint("[WS ERROR] $e");
-            stompClient?.deactivate();
+            setState(() {
+              stompClient?.deactivate();
+              isConnected = false;
+            });
           },
           onStompError: (stompFrame) {
-            debugPrint("[STOMP ERROR] ${stompFrame.body}");
-            stompClient?.deactivate();
+            debugPrint(
+                "[STOMP ERROR] ${stompFrame.command} --- ${stompFrame.body}");
+            subscribe();
           },
           onDisconnect: (f) => debugPrint("Disconnected")),
     );
@@ -87,6 +90,32 @@ class _MyHomePageState extends State<MyHomePage> {
       stompClient!.deactivate();
       isConnected = false;
     });
+  }
+
+  Future subscribe() async {
+    final response = await dio.get("/chat-queue",
+        queryParameters: {"fromUser": userFrom, "toUser": userTo});
+    debugPrint("Response: " + response.data.toString());
+    queue = "q.chat." + response.data["token"]!;
+    stompClient!.subscribe(
+        destination: queue!,
+        headers: {
+          "auto_delete": "true",
+          "durable": "false",
+          "exclusive": "false"
+        },
+        callback: (stompFrame) {
+          debugPrint("Sub response command: ${stompFrame.command}");
+          debugPrint("Sub response headers: ${stompFrame.headers}");
+          debugPrint("Sub response body: ${stompFrame.body}");
+          if (stompFrame.body != null) {
+            final chatMessage = json.decode(stompFrame.body!);
+            setState(() {
+              messages.add(chatMessage["text"]);
+            });
+          }
+          debugPrint("Sub response binary body: ${stompFrame.binaryBody}");
+        });
   }
 
   @override
@@ -101,24 +130,11 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Container(
-                constraints:
-                    const BoxConstraints(maxHeight: 100, maxWidth: 400),
-                child: TextField(
-                  onChanged: (token) => setState(() {
-                    this.token = token;
-                  }),
-                  maxLines: 5,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Token',
-                  ),
-                ),
-              ),
               SizedBox(
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height - 250,
                 child: SingleChildScrollView(
+                  controller: widget.scrollController,
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: messages
@@ -130,18 +146,38 @@ class _MyHomePageState extends State<MyHomePage> {
                           .toList()),
                 ),
               ),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 50, maxWidth: 400),
-                child: TextField(
-                  onChanged: (token) => setState(() {
-                    this.token = token;
-                  }),
-                  maxLines: 1,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Message',
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    constraints:
+                        const BoxConstraints(maxHeight: 50, maxWidth: 400),
+                    child: TextField(
+                      controller: widget.textController,
+                      onChanged: (message) async {},
+                      maxLines: 1,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Message',
+                      ),
+                    ),
                   ),
-                ),
+                  ElevatedButton(
+                      onPressed: () async {
+                        await dio.post("/send-msg", data: {
+                          "fromUser": userFrom,
+                          "toUser": userTo,
+                          "text": widget.textController.text
+                        });
+                        widget.textController.text = "";
+                        setState(() {
+                          widget.scrollController.jumpTo(
+                              widget.scrollController.position.maxScrollExtent +
+                                  40);
+                        });
+                      },
+                      child: const Icon(Icons.send))
+                ],
               ),
             ],
           ),
@@ -154,7 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Icon(Icons.cancel_outlined),
             )
           : FloatingActionButton(
-              onPressed: token != null && token!.isNotEmpty ? _connect : null,
+              onPressed: _connect,
               tooltip: 'Connect',
               child: const Icon(Icons.connect_without_contact),
             ),
